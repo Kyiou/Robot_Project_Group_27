@@ -1,0 +1,1 @@
+chprintf("Hello world!");
