@@ -15,6 +15,11 @@
 #include <pi_regulator.h>
 #include <process_image.h>
 
+#include "audio/audio_thread.h"
+#include "audio/play_melody.h"
+#include "audio/microphone.h"
+
+
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
 {
 	chSequentialStreamWrite((BaseSequentialStream *)&SD3, (uint8_t*)"START", 5);
@@ -24,7 +29,8 @@ void SendUint8ToComputer(uint8_t* data, uint16_t size)
 
 static void serial_start(void)
 {
-	static SerialConfig ser_cfg = {
+	static SerialConfig ser_cfg =
+	{
 	    115200,
 	    0,
 	    0,
@@ -56,7 +62,8 @@ int main(void)
 	process_image_start();
 
     /* Infinite loop. */
-    while (1) {
+    while (1)
+    {
     	//waits 1 second
         chThdSleepMilliseconds(1000);
     }
@@ -69,3 +76,4 @@ void __stack_chk_fail(void)
 {
     chSysHalt("Stack smashing detected");
 }
+

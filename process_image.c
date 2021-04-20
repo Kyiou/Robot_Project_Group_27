@@ -8,9 +8,12 @@
 
 #include <process_image.h>
 
-
+/*
 static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
+*/
+
+static uint16_t color = 0x0000;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -19,6 +22,7 @@ static BSEMAPHORE_DECL(image_ready_sem, TRUE);
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
  */
+/*
 uint16_t extract_line_width(uint8_t *buffer){
 
 	uint16_t i = 0, begin = 0, end = 0, width = 0;
@@ -98,6 +102,7 @@ uint16_t extract_line_width(uint8_t *buffer){
 		return width;
 	}
 }
+*/
 
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg) {
@@ -140,13 +145,16 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
 
-		//Extracts only the red pixels
-		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=2){
-			//extracts first 5bits of the first byte
-			//takes nothing from the second byte
-			image[i/2] = (uint8_t)img_buff_ptr[i]&0xF8;
-		}
+		//Extracts the colors
+		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=4)
+		{
+			//extracts first 5 bits of red and 3 of green
+			image[i/2] = (uint8_t)img_buff_ptr[i]&0xFF00;
 
+			//extracts 3 bits of green and 5 of blue
+			image[(i/2)+1] = (uint8_t)img_buff_ptr[i]&0x00FF;
+		}
+/*
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
 
@@ -161,16 +169,21 @@ static THD_FUNCTION(ProcessImage, arg) {
 		}
 		//invert the bool
 		send_to_computer = !send_to_computer;
+*/
     }
 }
 
-float get_distance_cm(void){
+/*
+float get_distance_cm(void)
+{
 	return distance_cm;
 }
-
+*/
+/*
 uint16_t get_line_position(void){
 	return line_position;
 }
+*/
 
 void process_image_start(void){
 	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
