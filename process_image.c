@@ -13,7 +13,6 @@ static float distance_cm = 0;
 static uint16_t line_position = IMAGE_BUFFER_SIZE/2;	//middle
 */
 
-static uint16_t color = 0x0000;
 
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
@@ -22,6 +21,47 @@ static BSEMAPHORE_DECL(image_ready_sem, TRUE);
  *  Returns the line's width extracted from the image buffer given
  *  Returns 0 if line not found
  */
+/*
+color extract_color(uint8_t *buffer)
+{
+	uint16_t mean_red = 0, mean_green = 0, mean_blue = 0;
+
+	for(uint16_t i = 0 ; i < 2 * IMAGE_BUFFER_SIZE ; i+=4)
+	{
+			mean_red += (buffer[i/2] & 0xF8);
+
+			mean_blue += (buffer[i/2 + 1] & 0x1F) << 3;
+
+			mean_green += ((buffer[i/2] & 0x07) << 5 | (buffer[i/2 + 1] & 0xE0) >> 3);
+	}
+
+	mean_red /= (IMAGE_BUFFER_SIZE/2);
+	mean_blue /= (IMAGE_BUFFER_SIZE/2);
+	mean_green /= (IMAGE_BUFFER_SIZE/2);
+
+	if((mean_red > mean_blue) && (mean_red > mean_green))
+	{
+		chprintf((BaseSequentialStream *)&SDU1, "red\r\n");
+		return red;
+	}
+
+	if((mean_blue > mean_red) && (mean_blue > mean_green))
+	{
+		chprintf((BaseSequentialStream *)&SDU1, "blue\r\n");
+		return blue;
+	}
+
+	if((mean_green > mean_blue) && (mean_green > mean_red))
+	{
+		chprintf((BaseSequentialStream *)&SDU1, "green\r\n");
+		return green;
+	}
+
+	chprintf((BaseSequentialStream *)&SDU1, "black\r\n");
+	return black;
+}
+*/
+
 /*
 uint16_t extract_line_width(uint8_t *buffer){
 
@@ -134,8 +174,8 @@ static THD_FUNCTION(ProcessImage, arg) {
     (void)arg;
 
 	uint8_t *img_buff_ptr;
-	uint8_t image[IMAGE_BUFFER_SIZE] = {0};
-	uint16_t lineWidth = 0;
+	//uint8_t image[IMAGE_BUFFER_SIZE] = {0};
+	//uint16_t lineWidth = 0;
 
 	bool send_to_computer = true;
 
@@ -145,15 +185,39 @@ static THD_FUNCTION(ProcessImage, arg) {
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
 
+		/*
+
 		//Extracts the colors
 		for(uint16_t i = 0 ; i < (2 * IMAGE_BUFFER_SIZE) ; i+=4)
 		{
 			//extracts first 5 bits of red and 3 of green
-			image[i/2] = (uint8_t)img_buff_ptr[i]&0xFF00;
+			image[i/2] = (uint8_t)img_buff_ptr[i];
 
 			//extracts 3 bits of green and 5 of blue
-			image[(i/2)+1] = (uint8_t)img_buff_ptr[i]&0x00FF;
+			image[(i/2)+1] = (uint8_t)img_buff_ptr[i+1];
 		}
+		*/
+
+	    uint16_t r = 0, g = 0, b = 0;
+
+	    for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
+	    {
+	    	r += (int)img_buff_ptr[i/2]&0xF8;
+	    	g += (int)(img_buff_ptr[i/2]&0x07)<<5 | (img_buff_ptr[i/2+1]&0xE0)>>3;
+	    	b += (int)(img_buff_ptr[i/2+1]&0x1F)<<3;
+	    }
+
+	    r /= (IMAGE_BUFFER_SIZE/2);
+	    g /= (IMAGE_BUFFER_SIZE/2);
+	    b /= (IMAGE_BUFFER_SIZE/2);
+/*
+		r = (int)img_buff_ptr[0]&0xF8;
+        g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
+        b = (int)(img_buff_ptr[1]&0x1F)<<3;
+ */
+        chprintf((BaseSequentialStream *)&SDU1, "CAMERA\r\n");
+        chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n\n", r, g, b);
+
 /*
 		//search for a line in the image and gets its width in pixels
 		lineWidth = extract_line_width(image);
