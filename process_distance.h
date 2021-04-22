@@ -8,8 +8,7 @@
 #ifndef PROCESS_DISTANCE_H_
 #define PROCESS_DISTANCE_H_
 
-
-
+void get_TOF_distance(void);
 
 
 #endif /* PROCESS_DISTANCE_H_ */
