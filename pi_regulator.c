@@ -10,6 +10,7 @@
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <sensors/VL53L0X/VL53L0X.h>
+#include <process_image.h>
 
 //simple PI regulator implementation
 int16_t pi_regulator(float distance, float goal){
@@ -42,6 +43,33 @@ int16_t pi_regulator(float distance, float goal){
     return (int16_t)speed;
 }
 
+int32_t rotation (colors color){
+	switch (color){
+		case BLACK: //turns opposite side
+			right_motor_set_pos(-500);
+			left_motor_set_pos(500);
+			break;
+
+		case RED: //stops
+			right_motor_set_speed(NULL);
+			left_motor_set_speed(NULL);
+			break;
+
+		case BLUE: //turns right
+			right_motor_set_pos(-250);
+			left_motor_set_pos(250);
+			break;
+
+		case GREEN: //turns left
+			right_motor_set_pos(250);
+			left_motor_set_pos(-250);
+			break;
+
+		case WHITE: //does nothing
+			break;
+	}
+}
+
 static THD_WORKING_AREA(waPiRegulator, 256);
 static THD_FUNCTION(PiRegulator, arg) {
 
@@ -69,9 +97,11 @@ static THD_FUNCTION(PiRegulator, arg) {
         	speed_correction = 0;
         }
 
+        rotation (get_color);
+
         //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+		//right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+		//left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 
         //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
