@@ -77,22 +77,26 @@ static THD_FUNCTION(ProcessImage, arg)
 		{
 			set_body_led(1);
 			color = BLACK;
+			chThdSleepMilliseconds(2500);
 		}
 		else if(r > mean && r > 100)
 		{
 			toggle_rgb_led(LED2, RED_LED, 1);
 			toggle_rgb_led(LED8, RED_LED, 1);
 			color = RED;
+			chThdSleepMilliseconds(1000);
 		}
 		else if(g > mean && g > 100)
 		{
 			toggle_rgb_led(LED2, GREEN_LED, 1);
 			color = GREEN;
+			chThdSleepMilliseconds(2000);
 		}
 		else if(b > mean && b > 100)
 		{
 			toggle_rgb_led(LED8, BLUE_LED, 1);
 			color =  BLUE;
+			chThdSleepMilliseconds(2000);
 		}
 		else
 		{
