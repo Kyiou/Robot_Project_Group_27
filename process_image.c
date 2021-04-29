@@ -101,7 +101,7 @@ static THD_FUNCTION(ProcessImage, arg)
     }
 }
 
-colors rgb_analyze(void)
+colors get_color(void)
 {
 	return color;
 }

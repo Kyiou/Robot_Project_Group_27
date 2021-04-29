@@ -11,7 +11,7 @@ typedef enum
 }colors;
 
 //return color
-colors rgb_analyze(void);
+colors get_color(void);
 
 void process_image_start(void);
 
