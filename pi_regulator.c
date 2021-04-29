@@ -9,10 +9,11 @@
 #include <motors.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <sensors/VL53L0X/VL53L0X.h>
 
 //simple PI regulator implementation
-int16_t pi_regulator(float distance, float goal){
-
+int16_t pi_regulator(float distance, float goal)
+{
 	float error = 0;
 	float speed = 0;
 
@@ -55,11 +56,13 @@ static THD_FUNCTION(PiRegulator, arg) {
     while(1){
         time = chVTGetSystemTime();
         
+        uint16_t get_distance = VL53L0X_get_dist_mm();
+
         //computes the speed to give to the motors
         //distance_cm is modified by the image processing thread
-        speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
+        speed = pi_regulator(get_distance, GOAL_DISTANCE);
         //computes a correction factor to let the robot rotate to be in front of the line
-        speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
+        speed_correction = 0; //(get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
         //if the line is nearly in front of the camera, don't rotate
         if(abs(speed_correction) < ROTATION_THRESHOLD){

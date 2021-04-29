@@ -11,6 +11,9 @@
 #include <motors.h>
 #include <camera/po8030.h>
 #include <chprintf.h>
+#include <sensors/VL53L0X/VL53L0X.h>
+#include <spi_comm.h>
+
 
 #include <pi_regulator.h>
 #include <process_image.h>
@@ -54,11 +57,15 @@ int main(void)
     //starts the camera
     dcmi_start();
 	po8030_start();
+	//starts distance measurement
+	VL53L0X_start();
 	//inits the motors
-	//motors_init();
+	motors_init();
+	//start communication
+	spi_comm_start();
 
 	//stars the threads for the pi regulator and the processing of the image
-	//pi_regulator_start();
+	pi_regulator_start();
 	process_image_start();
 
     /* Infinite loop. */
