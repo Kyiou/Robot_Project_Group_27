@@ -42,6 +42,35 @@ int16_t pi_regulator(float distance, float goal)
     return (int16_t)speed;
 }
 
+void rotation (colors color){
+	switch (color){
+		case BLACK: //turns opposite side
+			right_motor_set_speed(-300);
+			left_motor_set_speed(300);
+			break;
+
+		case RED: //stops
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+
+		case BLUE: //turns right
+			right_motor_set_speed(150);
+			left_motor_set_speed(-150);
+			break;
+
+		case GREEN: //turns left
+			right_motor_set_speed(-150);
+			left_motor_set_speed(150);
+			break;
+
+		case WHITE: //does nothing
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+	}
+}
+
 static THD_WORKING_AREA(waPiRegulator, 256);
 static THD_FUNCTION(PiRegulator, arg) {
 
@@ -64,14 +93,16 @@ static THD_FUNCTION(PiRegulator, arg) {
         //computes a correction factor to let the robot rotate to be in front of the line
         speed_correction = 0; //(get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
+        rotation (get_color());
+
         //if the line is nearly in front of the camera, don't rotate
         if(abs(speed_correction) < ROTATION_THRESHOLD){
         	speed_correction = 0;
         }
 
         //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
+		//right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
+		//left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
 
         //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
