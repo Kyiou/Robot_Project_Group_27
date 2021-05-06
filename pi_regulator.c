@@ -37,16 +37,32 @@ int16_t pi_regulator(float distance, float goal)
 		sum_error = -MAX_SUM_ERROR;
 	}
 
-	speed = KP * error + KI * sum_error;
+	speed = KP * error ;//+ KI * sum_error;
+
+	chprintf((BaseSequentialStream *)&SD3, "Distance = %d\n",VL53L0X_get_dist_mm());
+
+	if(VL53L0X_get_dist_mm() > 100)
+	{
+		speed = fabs(speed);
+	}
 
     return (int16_t)speed;
 }
 
-void rotation (colors color){
-	switch (color){
+void rotation (colors color)
+{
+	switch (color)
+	{
 		case BLACK: //turns opposite side
-			right_motor_set_speed(-300);
-			left_motor_set_speed(300);
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() < 500) && (right_motor_get_pos() > -500))
+			{
+				right_motor_set_speed(-250);
+				left_motor_set_speed(250);
+			};
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
 			break;
 
 		case RED: //stops
@@ -55,18 +71,32 @@ void rotation (colors color){
 			break;
 
 		case BLUE: //turns right
-			right_motor_set_speed(150);
-			left_motor_set_speed(-150);
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() < 250) && (right_motor_get_pos() < -250))
+			{
+				right_motor_set_speed(-250);
+				left_motor_set_speed(250);
+			};
+
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
 			break;
 
 		case GREEN: //turns left
-			right_motor_set_speed(-150);
-			left_motor_set_speed(150);
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() > -250) && (right_motor_get_pos() < 250))
+			{
+				right_motor_set_speed(250);
+				left_motor_set_speed(-250);
+			};
+
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
 			break;
 
 		case WHITE: //does nothing
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
 			break;
 	}
 }
@@ -84,27 +114,19 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     while(1){
         time = chVTGetSystemTime();
-        
-        uint16_t get_distance = VL53L0X_get_dist_mm();
 
-        //computes the speed to give to the motors
-        //distance_cm is modified by the image processing thread
-        speed = pi_regulator(get_distance, GOAL_DISTANCE);
-        //computes a correction factor to let the robot rotate to be in front of the line
-        speed_correction = 0; //(get_line_position() - (IMAGE_BUFFER_SIZE/2));
+        if(VL53L0X_get_dist_mm() <=100)
+        {
+        	//rotation (get_color());
 
-        rotation (get_color());
+        }
+        else
+        {
+    		right_motor_set_speed(pi_regulator(VL53L0X_get_dist_mm(), GOAL_DISTANCE));
+    		left_motor_set_speed(pi_regulator(VL53L0X_get_dist_mm(), GOAL_DISTANCE));
 
-        //if the line is nearly in front of the camera, don't rotate
-        if(abs(speed_correction) < ROTATION_THRESHOLD){
-        	speed_correction = 0;
         }
 
-        //applies the speed from the PI regulator and the correction for the rotation
-		//right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		//left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
-
-        //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
 }

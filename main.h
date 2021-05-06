@@ -20,8 +20,8 @@ extern "C" {
 #define GOAL_DISTANCE 			100.0f
 #define MAX_DISTANCE 			25.0f
 #define ERROR_THRESHOLD			10.0f	//[cm] because of the noise of the camera
-#define KP						800.0f
-#define KI 						0.1f	//must not be zero
+#define KP						400.0f
+#define KI 						0.5f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 
 /** Robot wide IPC bus. */

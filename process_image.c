@@ -6,6 +6,8 @@
 #include <main.h>
 #include <camera/po8030.h>
 #include <leds.h>
+#include <sensors/VL53L0X/VL53L0X.h>
+
 
 #include <process_image.h>
 
@@ -57,51 +59,50 @@ static THD_FUNCTION(ProcessImage, arg)
 
 		uint16_t r = 0, g = 0, b = 0, mean = 0;
 
-	    for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
-	    {
-	    	r += (uint16_t)img_buff_ptr[i/2]&0xF8;
-	    	g += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 | (img_buff_ptr[i/2+1]&0xE0)>>3;
-	    	b += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
-	    }
+		 if(VL53L0X_get_dist_mm() <=100)
+		 {
+			for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
+			{
+				r += (uint16_t)img_buff_ptr[i/2]&0xF8;
+				g += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 | (img_buff_ptr[i/2+1]&0xE0)>>3;
+				b += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
+			}
 
-	    r /= (IMAGE_BUFFER_SIZE/2);
-	    g /= (IMAGE_BUFFER_SIZE/2);
-	    b /= (IMAGE_BUFFER_SIZE/2);
+			r /= (IMAGE_BUFFER_SIZE/2);
+			g /= (IMAGE_BUFFER_SIZE/2);
+			b /= (IMAGE_BUFFER_SIZE/2);
 
-	    mean = (r+g+b)/3;
+			mean = (r+g+b)/3;
 
-	    clear_leds();
-	    set_body_led(0);
+			clear_leds();
+			set_body_led(0);
 
-		if(mean < 10)
-		{
-			set_body_led(1);
-			color = BLACK;
-			chThdSleepMilliseconds(2500);
-		}
-		else if(r > mean && r > 100)
-		{
-			toggle_rgb_led(LED2, RED_LED, 1);
-			toggle_rgb_led(LED8, RED_LED, 1);
-			color = RED;
-			chThdSleepMilliseconds(1000);
-		}
-		else if(g > mean && g > 100)
-		{
-			toggle_rgb_led(LED2, GREEN_LED, 1);
-			color = GREEN;
-			chThdSleepMilliseconds(2000);
-		}
-		else if(b > mean && b > 100)
-		{
-			toggle_rgb_led(LED8, BLUE_LED, 1);
-			color =  BLUE;
-			chThdSleepMilliseconds(2000);
-		}
-		else
-		{
-			color = WHITE;
-		}
+			if(mean < 10)
+			{
+				set_body_led(1);
+				color = BLACK;
+			}
+			else if(r > mean && r > 100)
+			{
+				toggle_rgb_led(LED2, RED_LED, 1);
+				toggle_rgb_led(LED8, RED_LED, 1);
+				color = RED;
+			}
+			else if(g > mean && g > 100)
+			{
+				toggle_rgb_led(LED2, GREEN_LED, 1);
+				color = GREEN;
+			}
+			else if(b > mean && b > 100)
+			{
+				toggle_rgb_led(LED8, BLUE_LED, 1);
+				color =  BLUE;
+			}
+			else
+			{
+				color = WHITE;
+			}
+		 }
     }
 }
 
