@@ -9,10 +9,11 @@
 #include <motors.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <sensors/VL53L0X/VL53L0X.h>
 
 //simple PI regulator implementation
-int16_t pi_regulator(float distance, float goal){
-
+int16_t pi_regulator(float distance, float goal)
+{
 	float error = 0;
 	float speed = 0;
 
@@ -36,9 +37,68 @@ int16_t pi_regulator(float distance, float goal){
 		sum_error = -MAX_SUM_ERROR;
 	}
 
-	speed = KP * error + KI * sum_error;
+	speed = KP * error ;//+ KI * sum_error;
+
+	chprintf((BaseSequentialStream *)&SD3, "Distance = %d\n",VL53L0X_get_dist_mm());
+
+	if(VL53L0X_get_dist_mm() > 100)
+	{
+		speed = fabs(speed);
+	}
 
     return (int16_t)speed;
+}
+
+void rotation (colors color)
+{
+	switch (color)
+	{
+		case BLACK: //turns opposite side
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() < 500) && (right_motor_get_pos() > -500))
+			{
+				right_motor_set_speed(-250);
+				left_motor_set_speed(250);
+			};
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+
+		case RED: //stops
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+
+		case BLUE: //turns right
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() < 250) && (right_motor_get_pos() < -250))
+			{
+				right_motor_set_speed(-250);
+				left_motor_set_speed(250);
+			};
+
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+
+		case GREEN: //turns left
+			left_motor_set_pos(0);
+			right_motor_set_pos(0);
+			while ((left_motor_get_pos() > -250) && (right_motor_get_pos() < 250))
+			{
+				right_motor_set_speed(250);
+				left_motor_set_speed(-250);
+			};
+
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			break;
+
+		case WHITE: //does nothing
+			break;
+	}
 }
 
 static THD_WORKING_AREA(waPiRegulator, 256);
@@ -54,23 +114,19 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     while(1){
         time = chVTGetSystemTime();
-        
-        //computes the speed to give to the motors
-        //distance_cm is modified by the image processing thread
-        speed = pi_regulator(get_distance_cm(), GOAL_DISTANCE);
-        //computes a correction factor to let the robot rotate to be in front of the line
-        speed_correction = (get_line_position() - (IMAGE_BUFFER_SIZE/2));
 
-        //if the line is nearly in front of the camera, don't rotate
-        if(abs(speed_correction) < ROTATION_THRESHOLD){
-        	speed_correction = 0;
+        if(VL53L0X_get_dist_mm() <=100)
+        {
+        	//rotation (get_color());
+
+        }
+        else
+        {
+    		right_motor_set_speed(pi_regulator(VL53L0X_get_dist_mm(), GOAL_DISTANCE));
+    		left_motor_set_speed(pi_regulator(VL53L0X_get_dist_mm(), GOAL_DISTANCE));
+
         }
 
-        //applies the speed from the PI regulator and the correction for the rotation
-		right_motor_set_speed(speed - ROTATION_COEFF * speed_correction);
-		left_motor_set_speed(speed + ROTATION_COEFF * speed_correction);
-
-        //100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
 }

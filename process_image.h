@@ -1,8 +1,18 @@
 #ifndef PROCESS_IMAGE_H
 #define PROCESS_IMAGE_H
 
-float get_distance_cm(void);
-uint16_t get_line_position(void);
+typedef enum
+{
+	RED = 0,
+	GREEN,
+	BLUE,
+	BLACK,
+	WHITE,
+}colors;
+
+//return color
+colors get_color(void);
+
 void process_image_start(void);
 
 #endif /* PROCESS_IMAGE_H */
