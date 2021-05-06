@@ -58,3 +58,5 @@ Mkfile.old
 dkms.conf
 
 lib/
+
+.project
