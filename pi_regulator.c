@@ -11,6 +11,12 @@
 #include <process_image.h>
 #include <sensors/VL53L0X/VL53L0X.h>
 
+#define WHEEL_DIAMETER			5.35f // cm // valeur à mesurer
+#define PI						3.1415926536f
+#define WHEEL_PERIMETER			(PI * WHEEL_DIAMETER) // cm
+#define NB_STEP					1000
+#define WHEEL_AXIS				5 // cm // valeur à mesurer
+
 //simple PI regulator implementation
 int16_t pi_regulator(float distance, float goal)
 {
@@ -49,20 +55,32 @@ int16_t pi_regulator(float distance, float goal)
     return (int16_t)speed;
 }
 
+void rotate_robot (float angle)
+{
+	int32_t nb_step_to_turn;
+
+	nb_step_to_turn = (int32_t)((angle * WHEEL_AXIS/WHEEL_PERIMETER) * NB_STEP);
+
+	left_motor_set_pos(0);
+	right_motor_set_pos(0);
+	while ((abs(left_motor_get_pos()) < abs(nb_step_to_turn)) && (abs(right_motor_get_pos()) < abs(nb_step_to_turn)))
+	{
+		right_motor_set_speed(-250);
+		left_motor_set_speed(250);
+	};
+	right_motor_set_speed(0);
+	left_motor_set_speed(0);
+}
+
 void rotation (colors color)
 {
+	float angle;
+
 	switch (color)
 	{
 		case BLACK: //turns opposite side
-			left_motor_set_pos(0);
-			right_motor_set_pos(0);
-			while ((left_motor_get_pos() < 500) && (right_motor_get_pos() > -500))
-			{
-				right_motor_set_speed(-250);
-				left_motor_set_speed(250);
-			};
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
+			angle = -PI;
+			rotate_robot (angle);
 			break;
 
 		case RED: //stops
@@ -71,29 +89,13 @@ void rotation (colors color)
 			break;
 
 		case BLUE: //turns right
-			left_motor_set_pos(0);
-			right_motor_set_pos(0);
-			while ((left_motor_get_pos() < 250) && (right_motor_get_pos() < -250))
-			{
-				right_motor_set_speed(-250);
-				left_motor_set_speed(250);
-			};
-
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
+			angle = -PI/2;
+			rotate_robot (angle);
 			break;
 
 		case GREEN: //turns left
-			left_motor_set_pos(0);
-			right_motor_set_pos(0);
-			while ((left_motor_get_pos() > -250) && (right_motor_get_pos() < 250))
-			{
-				right_motor_set_speed(250);
-				left_motor_set_speed(-250);
-			};
-
-			right_motor_set_speed(0);
-			left_motor_set_speed(0);
+			angle = PI/2;
+			rotate_robot (angle);
 			break;
 
 		case WHITE: //does nothing
