@@ -13,7 +13,15 @@
 
 static uint8_t rotation_done;
 
-//simple PI regulator implementation
+/*
+*@brief						simple PI regulator implementation
+*
+*@param		distance		how far from an object the robot is
+*@param		goal			what is the distance desired to the object
+*
+*@retval 	speed			how fast the motors will go
+*
+*/
 int16_t pi_regulator(float distance, float goal)
 {
 	float error = 0;
@@ -61,10 +69,17 @@ int16_t pi_regulator(float distance, float goal)
     return (int16_t)speed;
 }
 
+/*
+*@brief						precise rotation of the robot
+*
+*@param		angle			the angle we want the robot to complete
+*
+*/
 void rotate_robot (float angle)
 {
 	int32_t nb_step_to_turn;
 
+	//transform the angle into a number of steps
 	nb_step_to_turn = (int32_t)((angle * WHEEL_AXIS/WHEEL_PERIMETER) * NB_STEP);
 
 	//stops to improve the rotation after
@@ -72,7 +87,8 @@ void rotate_robot (float angle)
 	right_motor_set_pos(0);
 
 	//perform a rotation
-	while ((abs(left_motor_get_pos()) < abs(nb_step_to_turn)) && (abs(right_motor_get_pos()) < abs(nb_step_to_turn)))
+	while ((abs(left_motor_get_pos()) < abs(nb_step_to_turn)) &&
+			(abs(right_motor_get_pos()) < abs(nb_step_to_turn)))
 	{
 		if(angle < 0)
 		{
@@ -90,6 +106,13 @@ void rotate_robot (float angle)
 	left_motor_set_speed(0);
 }
 
+
+/*
+*@brief						set the rotation depending on the color
+*
+*@param		color			color obtained from the camera
+*
+*/
 void rotation (colors color)
 {
 	float angle;
@@ -139,6 +162,7 @@ static THD_FUNCTION(PiRegulator, arg) {
     {
         time = chVTGetSystemTime();
 
+        //get the distance from time of flight sensor
         distance = VL53L0X_get_dist_mm();
 
         rotation_done = TRUE;
@@ -146,9 +170,10 @@ static THD_FUNCTION(PiRegulator, arg) {
         //stops the motor when around analyzing distance
         if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD && distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
         {
-        	right_motor_set_speed(FALSE);
-        	left_motor_set_speed(FALSE);
+        	right_motor_set_speed(0);
+        	left_motor_set_speed(0);
 
+        	//does the rotation only after it analyzed a color
         	if(ready())
         	{
 				rotation_done = FALSE;
@@ -157,6 +182,7 @@ static THD_FUNCTION(PiRegulator, arg) {
         }
         else
         {
+        	//move straight to the next objective if the distance is greater than goal
     		right_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
     		left_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
 

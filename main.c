@@ -53,7 +53,7 @@ int main(void)
 	po8030_start();
 	//starts distance measurement
 	VL53L0X_start();
-	//inits the motors
+	//init motors
 	motors_init();
 	//start communication
 	spi_comm_start();

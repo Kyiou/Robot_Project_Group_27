@@ -1,7 +1,13 @@
 #ifndef PI_REGULATOR_H
 #define PI_REGULATOR_H
 
-//return the signal that the rotation is done or not
+//
+/*
+*@brief							return the signal that the rotation is done or not
+*
+*@retval	rotation_done		signal that the rotation is done (TRUE/FALSE)
+*
+*/
 uint8_t rotation_finished(void);
 
 //start the PI regulator thread
