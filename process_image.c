@@ -18,10 +18,12 @@ static uint8_t color_ready;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 
+/***************************INTERNAL FUNCTIONS************************************/
 
 /*
 *@brief					function to normalize the color value
-*						by subtracting the average
+*						by subtracting the average due to
+*						ambient light
 *
 *@param	rgb				intensity of one color channel
 *@param	mean			average of the three color channel
@@ -115,14 +117,14 @@ static THD_FUNCTION(CaptureImage, arg)
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 
-	//deactivate auto white balance for camera (1 activate, 0 deactivate)
-	po8030_set_awb(0);
+	//deactivate auto white balance for camera (TRUE activate, FALSE deactivate)
+	po8030_set_awb(FALSE);
 
 	//camera settings to adjust depending on ambient light
 	//brightness from -128 to 127 (default 0)
 	//contrast from 0 to 255 (default 64)
-	po8030_set_brightness(16);
-	po8030_set_contrast(32);
+	po8030_set_brightness(BRIGHTNESS);
+	po8030_set_contrast(CONTRAST);
 
     while(1)
     {
@@ -188,6 +190,11 @@ static THD_FUNCTION(ProcessImage, arg)
 		 }
     }
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
 
 colors get_color(void)
 {

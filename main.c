@@ -46,15 +46,20 @@ int main(void)
 
     //starts the serial communication
     serial_start();
+
     //start the USB communication
     usb_start();
+
     //starts the camera
     dcmi_start();
 	po8030_start();
+
 	//starts distance measurement
 	VL53L0X_start();
+
 	//init motors
 	motors_init();
+
 	//start communication
 	spi_comm_start();
 

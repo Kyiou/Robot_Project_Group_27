@@ -13,6 +13,8 @@
 
 static uint8_t rotation_done;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
 /*
 *@brief						simple PI regulator implementation
 *
@@ -60,7 +62,7 @@ int16_t pi_regulator(float distance, float goal)
         speed = -MOTOR_MAX;
     }
 
-    //prevents the robot from going back when too far of the object
+    //prevents the robot from going back when too far from the object
 	if(distance > GOAL_DISTANCE)
 	{
 		speed = fabs(speed);
@@ -82,7 +84,7 @@ void rotate_robot (float angle)
 	//transform the angle into a number of steps
 	nb_step_to_turn = (int32_t)((angle * WHEEL_AXIS/WHEEL_PERIMETER) * NB_STEP);
 
-	//stops to improve the rotation after
+	//sets a position before turning to count steps
 	left_motor_set_pos(0);
 	right_motor_set_pos(0);
 
@@ -101,6 +103,7 @@ void rotate_robot (float angle)
 			left_motor_set_speed(MOTOR_SPEED);
 		}
 	};
+
 	//stops to improve the straight line move after
 	right_motor_set_speed(0);
 	left_motor_set_speed(0);
@@ -110,7 +113,7 @@ void rotate_robot (float angle)
 /*
 *@brief						set the rotation depending on the color
 *
-*@param		color			color obtained from the camera
+*@param		color			color obtained from analysis of the camera
 *
 */
 void rotation (colors color)
@@ -187,10 +190,16 @@ static THD_FUNCTION(PiRegulator, arg) {
     		left_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
 
         }
-
+        //sets PI frequency to 100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(PI_PERIOD));
     }
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
 
 uint8_t rotation_finished(void)
 {
