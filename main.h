@@ -18,6 +18,7 @@ extern "C" {
 #define KI 						0.3f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
 #define COLOR_THRESHOLD			20 	//threshold for intensity of color
+#define NB_COLOR				3
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

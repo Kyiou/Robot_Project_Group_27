@@ -48,8 +48,8 @@ static THD_FUNCTION(CaptureImage, arg)
 	//camera settings to adjust depending on ambient light
 	//brightness from -128 to 127 (default 0)
 	//contrast from 0 to 255 (default 64)
-	po8030_set_brightness(0);
-	po8030_set_contrast(64);
+	po8030_set_brightness(32);
+	po8030_set_contrast(32);
 
     while(1)
     {
@@ -63,7 +63,7 @@ static THD_FUNCTION(CaptureImage, arg)
 }
 
 
-static THD_WORKING_AREA(waProcessImage, 1024);
+static THD_WORKING_AREA(waProcessImage, 512);
 static THD_FUNCTION(ProcessImage, arg)
 {
 
@@ -72,14 +72,14 @@ static THD_FUNCTION(ProcessImage, arg)
 
 	uint8_t *img_buff_ptr;
 
+	uint16_t rgb[NB_COLOR]={0,0,0}, mean = 0, distance =0;
+
     while(1)
     {
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
 		//gets the pointer to the array filled with the last image in RGB565    
 		img_buff_ptr = dcmi_get_last_image_ptr();
-
-		uint16_t r = 0, g = 0, b = 0, mean = 0, distance =0;
 
 		//get the distance to object
 		 distance = VL53L0X_get_dist_mm();
@@ -94,26 +94,28 @@ static THD_FUNCTION(ProcessImage, arg)
 		 color_ready = 0;
 
 		 //analyze the color of a picture only if at a turning distance
-		 if((distance <= GOAL_DISTANCE + ERROR_THRESHOLD && distance >= GOAL_DISTANCE - ERROR_THRESHOLD) && rotation_finished())
+		 if((distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
+			 distance >= GOAL_DISTANCE - ERROR_THRESHOLD) && rotation_finished())
 		 {
 			for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
 			{
-				r += (uint16_t)img_buff_ptr[i/2]&0xF8;
-				g += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 | (img_buff_ptr[i/2+1]&0xE0)>>3;
-				b += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
+				rgb[RED] += (uint16_t)img_buff_ptr[i/2]&0xF8;
+				rgb[GREEN] += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 |
+										(img_buff_ptr[i/2+1]&0xE0)>>3;
+				rgb[BLUE] += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
 			}
 
-			r /= (IMAGE_BUFFER_SIZE/2);
-			g /= (IMAGE_BUFFER_SIZE/2);
-			b /= (IMAGE_BUFFER_SIZE/2);
+			rgb[RED] /= (IMAGE_BUFFER_SIZE/2);
+			rgb[GREEN] /= (IMAGE_BUFFER_SIZE/2);
+			rgb[BLUE] /= (IMAGE_BUFFER_SIZE/2);
 
-			mean = (r+g+b)/3;
+			mean = (rgb[RED]+rgb[GREEN]+rgb[BLUE])/3;
 
-			r = normalize(r, mean);
-			g = normalize(g, mean);
-			b = normalize(b, mean);
+			rgb[RED] = normalize(rgb[RED], mean);
+			rgb[GREEN] = normalize(rgb[GREEN], mean);
+			rgb[BLUE] = normalize(rgb[BLUE], mean);
 
-			chprintf((BaseSequentialStream *)&SD3, "Color : r = %d , g = %d , b = %d, mean = %d \n", r, g, b, mean);
+			chprintf((BaseSequentialStream *)&SD3, "Color : r = %d , g = %d , b = %d, mean = %d \n", rgb[RED], rgb[GREEN], rgb[BLUE], mean);
 
 			//indicate the color based on experimental threshold white by default
 			//color_ready is the signal that the color was analyzed
@@ -122,18 +124,21 @@ static THD_FUNCTION(ProcessImage, arg)
 				set_body_led(1);
 				color = BLACK;
 			}
-			else if((r > COLOR_THRESHOLD) && ((b < COLOR_THRESHOLD) && (g<COLOR_THRESHOLD)))
+			else if((rgb[RED] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
+					(rgb[GREEN] < COLOR_THRESHOLD)))
 			{
 				toggle_rgb_led(LED2, RED_LED, 1);
 				toggle_rgb_led(LED8, RED_LED, 1);
 				color = RED;
 			}
-			else if((g > COLOR_THRESHOLD) && ((b < COLOR_THRESHOLD) && (r<COLOR_THRESHOLD)))
+			else if((rgb[GREEN] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
+					(rgb[RED] < COLOR_THRESHOLD)))
 			{
 				toggle_rgb_led(LED2, GREEN_LED, 1);
 				color = GREEN;
 			}
-			else if((b > COLOR_THRESHOLD) && ((r < COLOR_THRESHOLD) && (g<COLOR_THRESHOLD)))
+			else if((rgb[BLUE] > COLOR_THRESHOLD) && ((rgb[RED] < COLOR_THRESHOLD) &&
+					(rgb[GREEN] < COLOR_THRESHOLD)))
 			{
 				toggle_rgb_led(LED8, BLUE_LED, 1);
 				color =  BLUE;
