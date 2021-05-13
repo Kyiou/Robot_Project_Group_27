@@ -11,14 +11,6 @@
 #include <process_image.h>
 #include <sensors/VL53L0X/VL53L0X.h>
 
-#define WHEEL_DIAMETER			4.0f // cm // valeur à mesurer
-#define PI						3.1415926536f
-#define WHEEL_PERIMETER			(PI * WHEEL_DIAMETER) // cm
-#define NB_STEP					1000
-#define WHEEL_AXIS				2.55 // cm // valeur à mesurer
-#define MOTOR_SPEED				250	 //in steps during a turn for steady turns
-#define MOTOR_MAX				500	 //in steps low enough so the robot doesn't drift
-
 static uint8_t rotation_done;
 
 //simple PI regulator implementation
@@ -149,18 +141,18 @@ static THD_FUNCTION(PiRegulator, arg) {
 
         distance = VL53L0X_get_dist_mm();
 
-        rotation_done = 1;
+        rotation_done = TRUE;
 
         //stops the motor when around analyzing distance
         if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD && distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
         {
-        	right_motor_set_speed(0);
-        	left_motor_set_speed(0);
+        	right_motor_set_speed(FALSE);
+        	left_motor_set_speed(FALSE);
 
         	if(ready())
         	{
-        		rotation_done = 0;
-        		rotation (get_color());
+				rotation_done = FALSE;
+				rotation (get_color());
         	}
         }
         else
@@ -170,7 +162,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 
         }
 
-        chThdSleepUntilWindowed(time, time + MS2ST(10));
+        chThdSleepUntilWindowed(time, time + MS2ST(PI_PERIOD));
     }
 }
 

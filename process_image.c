@@ -18,7 +18,15 @@ static uint8_t color_ready;
 //semaphore
 static BSEMAPHORE_DECL(image_ready_sem, TRUE);
 
-//function to normalize the color values
+
+/*
+*@brief					function to normalize the color value
+*						by subtracting the average
+*
+*@param	rgb				intensity of one color channel
+*@param	mean			average of the three color channel
+*
+*/
 uint16_t normalize(uint16_t rgb, uint16_t mean)
 {
 	if(rgb > mean)
@@ -29,7 +37,13 @@ uint16_t normalize(uint16_t rgb, uint16_t mean)
 	return 0;
 }
 
-//extract the color from the picture
+/*
+*@brief						extract the color from the picture
+*
+*@param	rgb[]				table with colors red, green, blue
+*@param	*img_buff_ptr		pointer to the array filled with the last image
+*
+*/
 void analyze_pic(uint16_t rgb[], uint8_t *img_buff_ptr)
 {
 	//analyze 320 pixels from the picture taken
@@ -47,33 +61,39 @@ void analyze_pic(uint16_t rgb[], uint8_t *img_buff_ptr)
 	rgb[BLUE] /= (IMAGE_BUFFER_SIZE/2);
 }
 
-
-//@brief	indicate the color based on experimental threshold, white by default
-//@param	table with colors red, green, blue and value of the average
+/*
+*@brief			indicate the color seen based on experimental threshold
+*				attention : white by default
+*				set some RGB LEDS to match
+*
+*@param	rgb[]	table with colors red, green, blue
+*@param	mean	value of the average from rgb
+*
+*/
 void analyze_color(uint16_t rgb[], uint16_t mean)
 {
 	if(mean < COLOR_MIN_MEAN)
 	{
-		set_body_led(1);
+		set_body_led(TRUE);
 		color = BLACK;
 	}
 	else if((rgb[RED] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
 			(rgb[GREEN] < COLOR_THRESHOLD)))
 	{
-		toggle_rgb_led(LED2, RED_LED, 1);
-		toggle_rgb_led(LED8, RED_LED, 1);
+		toggle_rgb_led(LED2, RED_LED, TRUE);
+		toggle_rgb_led(LED8, RED_LED, TRUE);
 		color = RED;
 	}
 	else if((rgb[GREEN] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
 			(rgb[RED] < COLOR_THRESHOLD)))
 	{
-		toggle_rgb_led(LED2, GREEN_LED, 1);
+		toggle_rgb_led(LED2, GREEN_LED, TRUE);
 		color = GREEN;
 	}
 	else if((rgb[BLUE] > COLOR_THRESHOLD) && ((rgb[RED] < COLOR_THRESHOLD) &&
 			(rgb[GREEN] < COLOR_THRESHOLD)))
 	{
-		toggle_rgb_led(LED8, BLUE_LED, 1);
+		toggle_rgb_led(LED8, BLUE_LED, TRUE);
 		color =  BLUE;
 	}
 	else
@@ -95,7 +115,7 @@ static THD_FUNCTION(CaptureImage, arg)
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
 
-	//deactivate auto white balance for camera (1 activate)
+	//deactivate auto white balance for camera (1 activate, 0 deactivate)
 	po8030_set_awb(0);
 
 	//camera settings to adjust depending on ambient light
@@ -141,11 +161,11 @@ static THD_FUNCTION(ProcessImage, arg)
 		 if(distance > GOAL_DISTANCE)
 		 {
 			 clear_leds();
-			 set_body_led(0);
+			 set_body_led(FALSE);
 		 }
 
 		//color_ready is the signal that the color was analyzed (=1) or not (=0)
-		 color_ready = 0;
+		 color_ready = FALSE;
 
 		 //analyze the color of a picture only if at a turning distance
 		 if((distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
@@ -164,7 +184,7 @@ static THD_FUNCTION(ProcessImage, arg)
 
 			analyze_color(rgb, mean);
 
-			color_ready = 1;
+			color_ready = TRUE;
 		 }
     }
 }
@@ -181,6 +201,6 @@ uint8_t ready(void)
 
 void process_image_start(void)
 {
-	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO+1, ProcessImage, NULL);
+	chThdCreateStatic(waProcessImage, sizeof(waProcessImage), NORMALPRIO, ProcessImage, NULL);
 	chThdCreateStatic(waCaptureImage, sizeof(waCaptureImage), NORMALPRIO, CaptureImage, NULL);
 }

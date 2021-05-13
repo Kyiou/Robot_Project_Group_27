@@ -11,15 +11,27 @@ extern "C" {
 
 
 //constants for the differents parts of the project
+
+//process image
 #define IMAGE_BUFFER_SIZE		640
+#define COLOR_THRESHOLD			20 	//threshold for intensity of color
+#define COLOR_MIN_MEAN			30
+#define NB_COLOR				3
+
+//PI regulator
 #define GOAL_DISTANCE 			100.0f	//[mm]
 #define ERROR_THRESHOLD			10.0f	//[cm] because of the noise of the camera
 #define KP						7.0f
 #define KI 						0.3f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
-#define COLOR_THRESHOLD			20 	//threshold for intensity of color
-#define COLOR_MIN_MEAN				30
-#define NB_COLOR				3
+#define WHEEL_DIAMETER			4.0f // cm // valeur à mesurer
+#define PI						3.1415926536f
+#define WHEEL_PERIMETER			(PI * WHEEL_DIAMETER) // cm
+#define NB_STEP					1000
+#define WHEEL_AXIS				2.55 // cm // valeur à mesurer
+#define MOTOR_SPEED				250	 //in steps during a turn for steady turns
+#define MOTOR_MAX				500	 //in steps low enough so the robot doesn't drift
+#define PI_PERIOD				10
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
