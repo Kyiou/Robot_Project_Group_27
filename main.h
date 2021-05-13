@@ -12,17 +12,12 @@ extern "C" {
 
 //constants for the differents parts of the project
 #define IMAGE_BUFFER_SIZE		640
-#define WIDTH_SLOPE				5
-#define MIN_LINE_WIDTH			40
-#define ROTATION_THRESHOLD		10
-#define ROTATION_COEFF			2 
-#define PXTOCM					1570.0f //experimental value
-#define GOAL_DISTANCE 			100.0f
-#define MAX_DISTANCE 			25.0f
+#define GOAL_DISTANCE 			100.0f	//[mm]
 #define ERROR_THRESHOLD			10.0f	//[cm] because of the noise of the camera
-#define KP						400.0f
-#define KI 						0.5f	//must not be zero
+#define KP						7.0f
+#define KI 						0.3f	//must not be zero
 #define MAX_SUM_ERROR 			(MOTOR_SPEED_LIMIT/KI)
+#define COLOR_THRESHOLD			20 	//threshold for intensity of color
 
 /** Robot wide IPC bus. */
 extern messagebus_t bus;

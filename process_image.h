@@ -10,8 +10,11 @@ typedef enum
 	WHITE,
 }colors;
 
-//return color
+//return color to be used in other files
 colors get_color(void);
+
+//return the signal that a color was analyzed
+uint8_t ready(void);
 
 void process_image_start(void);
 
