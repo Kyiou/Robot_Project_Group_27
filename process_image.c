@@ -29,6 +29,59 @@ uint16_t normalize(uint16_t rgb, uint16_t mean)
 	return 0;
 }
 
+//extract the color from the picture
+void analyze_pic(uint16_t rgb[], uint8_t *img_buff_ptr)
+{
+	//analyze 320 pixels from the picture taken
+	for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
+	{
+		rgb[RED] += (uint16_t)img_buff_ptr[i/2]&0xF8;
+		rgb[GREEN] += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 |
+								(img_buff_ptr[i/2+1]&0xE0)>>3;
+		rgb[BLUE] += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
+	}
+
+	//average the value for better results
+	rgb[RED] /= (IMAGE_BUFFER_SIZE/2);
+	rgb[GREEN] /= (IMAGE_BUFFER_SIZE/2);
+	rgb[BLUE] /= (IMAGE_BUFFER_SIZE/2);
+}
+
+
+//@brief	indicate the color based on experimental threshold, white by default
+//@param	table with colors red, green, blue and value of the average
+void analyze_color(uint16_t rgb[], uint16_t mean)
+{
+	if(mean < COLOR_MIN_MEAN)
+	{
+		set_body_led(1);
+		color = BLACK;
+	}
+	else if((rgb[RED] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
+			(rgb[GREEN] < COLOR_THRESHOLD)))
+	{
+		toggle_rgb_led(LED2, RED_LED, 1);
+		toggle_rgb_led(LED8, RED_LED, 1);
+		color = RED;
+	}
+	else if((rgb[GREEN] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
+			(rgb[RED] < COLOR_THRESHOLD)))
+	{
+		toggle_rgb_led(LED2, GREEN_LED, 1);
+		color = GREEN;
+	}
+	else if((rgb[BLUE] > COLOR_THRESHOLD) && ((rgb[RED] < COLOR_THRESHOLD) &&
+			(rgb[GREEN] < COLOR_THRESHOLD)))
+	{
+		toggle_rgb_led(LED8, BLUE_LED, 1);
+		color =  BLUE;
+	}
+	else
+	{
+		color = WHITE;
+	}
+}
+
 static THD_WORKING_AREA(waCaptureImage, 256);
 static THD_FUNCTION(CaptureImage, arg)
 {
@@ -48,7 +101,7 @@ static THD_FUNCTION(CaptureImage, arg)
 	//camera settings to adjust depending on ambient light
 	//brightness from -128 to 127 (default 0)
 	//contrast from 0 to 255 (default 64)
-	po8030_set_brightness(32);
+	po8030_set_brightness(16);
 	po8030_set_contrast(32);
 
     while(1)
@@ -91,62 +144,26 @@ static THD_FUNCTION(ProcessImage, arg)
 			 set_body_led(0);
 		 }
 
+		//color_ready is the signal that the color was analyzed (=1) or not (=0)
 		 color_ready = 0;
 
 		 //analyze the color of a picture only if at a turning distance
 		 if((distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
 			 distance >= GOAL_DISTANCE - ERROR_THRESHOLD) && rotation_finished())
 		 {
-			for(uint16_t i = 0; i < (IMAGE_BUFFER_SIZE*2); i+=4)
-			{
-				rgb[RED] += (uint16_t)img_buff_ptr[i/2]&0xF8;
-				rgb[GREEN] += (uint16_t)(img_buff_ptr[i/2]&0x07)<<5 |
-										(img_buff_ptr[i/2+1]&0xE0)>>3;
-				rgb[BLUE] += (uint16_t)(img_buff_ptr[i/2+1]&0x1F)<<3;
-			}
+			analyze_pic(rgb, img_buff_ptr);
 
-			rgb[RED] /= (IMAGE_BUFFER_SIZE/2);
-			rgb[GREEN] /= (IMAGE_BUFFER_SIZE/2);
-			rgb[BLUE] /= (IMAGE_BUFFER_SIZE/2);
-
-			mean = (rgb[RED]+rgb[GREEN]+rgb[BLUE])/3;
+			mean = (rgb[RED]+rgb[BLUE]+rgb[GREEN])/3;
 
 			rgb[RED] = normalize(rgb[RED], mean);
 			rgb[GREEN] = normalize(rgb[GREEN], mean);
 			rgb[BLUE] = normalize(rgb[BLUE], mean);
 
-			chprintf((BaseSequentialStream *)&SD3, "Color : r = %d , g = %d , b = %d, mean = %d \n", rgb[RED], rgb[GREEN], rgb[BLUE], mean);
+			/*chprintf((BaseSequentialStream *)&SD3, "Color : r = %d , g = %d , b = %d, mean = %d \n"
+												 , rgb[RED], rgb[GREEN], rgb[BLUE], mean);*/
 
-			//indicate the color based on experimental threshold white by default
-			//color_ready is the signal that the color was analyzed
-			if(mean < 3*ERROR_THRESHOLD)
-			{
-				set_body_led(1);
-				color = BLACK;
-			}
-			else if((rgb[RED] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
-					(rgb[GREEN] < COLOR_THRESHOLD)))
-			{
-				toggle_rgb_led(LED2, RED_LED, 1);
-				toggle_rgb_led(LED8, RED_LED, 1);
-				color = RED;
-			}
-			else if((rgb[GREEN] > COLOR_THRESHOLD) && ((rgb[BLUE] < COLOR_THRESHOLD) &&
-					(rgb[RED] < COLOR_THRESHOLD)))
-			{
-				toggle_rgb_led(LED2, GREEN_LED, 1);
-				color = GREEN;
-			}
-			else if((rgb[BLUE] > COLOR_THRESHOLD) && ((rgb[RED] < COLOR_THRESHOLD) &&
-					(rgb[GREEN] < COLOR_THRESHOLD)))
-			{
-				toggle_rgb_led(LED8, BLUE_LED, 1);
-				color =  BLUE;
-			}
-			else
-			{
-				color = WHITE;
-			}
+			analyze_color(rgb, mean);
+
 			color_ready = 1;
 		 }
     }
@@ -154,7 +171,6 @@ static THD_FUNCTION(ProcessImage, arg)
 
 colors get_color(void)
 {
-	//chprintf((BaseSequentialStream *)&SD3, "Color = %d \n", color);
 	return color;
 }
 
