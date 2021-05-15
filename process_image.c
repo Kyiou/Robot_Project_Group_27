@@ -126,14 +126,25 @@ static THD_FUNCTION(CaptureImage, arg)
 	po8030_set_brightness(BRIGHTNESS);
 	po8030_set_contrast(CONTRAST);
 
+
+
     while(TRUE)
     {
-        //starts a capture
-		dcmi_capture_start();
-		//waits for the capture to be done
-		wait_image_ready();
-		//signals an image has been captured
-		chBSemSignal(&image_ready_sem);
+    	uint16_t distance;
+    	//get the distance to object
+    	 distance = VL53L0X_get_dist_mm();
+
+    	 //picture taken only if at a turning distance
+		 if((distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
+			 distance >= GOAL_DISTANCE - ERROR_THRESHOLD) && rotation_finished())
+		 {
+			//starts a capture
+			dcmi_capture_start();
+			//waits for the capture to be done
+			wait_image_ready();
+			//signals an image has been captured
+			chBSemSignal(&image_ready_sem);
+		 }
     }
 }
 

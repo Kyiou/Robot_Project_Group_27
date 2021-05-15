@@ -183,8 +183,8 @@ static THD_FUNCTION(PiRegulator, arg) {
         	//move straight to the next objective if the distance is greater than goal
     		right_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
     		left_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
-
         }
+        //chprintf((BaseSequentialStream *)&SD3, "Distance = %d , PI_speed = %d \n", distance, pi_regulator(distance, GOAL_DISTANCE));
         //sets PI frequency to 100Hz
         chThdSleepUntilWindowed(time, time + MS2ST(PI_PERIOD));
     }

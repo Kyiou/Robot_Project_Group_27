@@ -15,6 +15,8 @@
 #include <spi_comm.h>
 #include <pi_regulator.h>
 #include <process_image.h>
+#include <audio/microphone.h>
+#include <audio/play_melody.h>
 
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
@@ -60,12 +62,16 @@ int main(void)
 	//init motors
 	motors_init();
 
-	//start communication
+	//starts communication
 	spi_comm_start();
 
-	//stars the threads for the pi regulator and the processing of the image
+	//starts the threads for the pi regulator and the processing of the image
 	pi_regulator_start();
 	process_image_start();
+
+	//starts microphone
+	mic_start(NULL);
+	//playMelodyStart();
 
     /* Infinite loop. */
     while (TRUE)
