@@ -16,7 +16,9 @@
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <audio/microphone.h>
+#include <audio/audio_thread.h>
 #include <audio/play_melody.h>
+#include <audio/play_sound_file.h>
 
 
 void SendUint8ToComputer(uint8_t* data, uint16_t size) 
@@ -71,7 +73,8 @@ int main(void)
 
 	//starts microphone
 	mic_start(NULL);
-	//playMelodyStart();
+    dac_start();
+    playMelodyStart();
 
     /* Infinite loop. */
     while (TRUE)

@@ -10,6 +10,7 @@
 #include <pi_regulator.h>
 #include <process_image.h>
 #include <sensors/VL53L0X/VL53L0X.h>
+#include <sound.h>
 
 static uint8_t rotation_done;
 
@@ -155,38 +156,54 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     int16_t distance;
 
+    uint8_t start = TRUE;
+
     while(TRUE)
     {
-        time = chVTGetSystemTime();
+    	if(start_stop())
+    	{
+    		if(start)
+    		{
+    			start = FALSE;
+    			chThdSleepMilliseconds(SEC/4);
+    		}
+			time = chVTGetSystemTime();
 
-        //get the distance from time of flight sensor
-        distance = VL53L0X_get_dist_mm();
+			//get the distance from time of flight sensor
+			distance = VL53L0X_get_dist_mm();
 
-        rotation_done = TRUE;
+			rotation_done = TRUE;
 
-        //stops the motor when around analyzing distance
-        if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
-           distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
-        {
-        	right_motor_set_speed(0);
-        	left_motor_set_speed(0);
+			//stops the motor when around analyzing distance
+			if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
+			   distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
+			{
+				right_motor_set_speed(0);
+				left_motor_set_speed(0);
 
-        	//does the rotation only after it analyzed a color
-        	if(ready())
-        	{
-				rotation_done = FALSE;
-				rotation (get_color());
-        	}
-        }
-        else
-        {
-        	//move straight to the next objective if the distance is greater than goal
-    		right_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
-    		left_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
-        }
-        //chprintf((BaseSequentialStream *)&SD3, "Distance = %d , PI_speed = %d \n", distance, pi_regulator(distance, GOAL_DISTANCE));
-        //sets PI frequency to 100Hz
-        chThdSleepUntilWindowed(time, time + MS2ST(PI_PERIOD));
+				//does the rotation only after it analyzed a color
+				if(ready())
+				{
+					rotation_done = FALSE;
+					rotation (get_color());
+				}
+			}
+			else
+			{
+				//move straight to the next objective if the distance is greater than goal
+				right_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
+				left_motor_set_speed(pi_regulator(distance, GOAL_DISTANCE));
+			}
+			//chprintf((BaseSequentialStream *)&SD3, "Distance = %d , PI_speed = %d \n", distance, pi_regulator(distance, GOAL_DISTANCE));
+			//sets PI frequency to 100Hz
+			chThdSleepUntilWindowed(time, time + MS2ST(PI_PERIOD));
+    	}
+    	else
+    	{
+			right_motor_set_speed(0);
+			left_motor_set_speed(0);
+			chThdSleepMilliseconds(SEC/2);
+    	}
     }
 }
 

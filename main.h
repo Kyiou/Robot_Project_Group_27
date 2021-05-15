@@ -37,6 +37,10 @@ extern "C" {
 #define MOTOR_MAX				500	//in steps low enough so the robot doesn't drift
 #define PI_PERIOD				10	//ms	//corresponds to 100Hz
 
+//Sound
+#define START_THRESHOLD			3000 //in volume intensity
+#define STOP_THRESHOLD			5*START_THRESHOLD //same as START_THRESHOLD
+
 /** Robot wide IPC bus. */
 extern messagebus_t bus;
 
