@@ -68,10 +68,10 @@ int main(void)
 	process_image_start();
 
     /* Infinite loop. */
-    while (1)
+    while (TRUE)
     {
     	//waits 1 second
-        chThdSleepMilliseconds(1000);
+        chThdSleepMilliseconds(SEC);
     }
 }
 

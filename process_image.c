@@ -126,7 +126,7 @@ static THD_FUNCTION(CaptureImage, arg)
 	po8030_set_brightness(BRIGHTNESS);
 	po8030_set_contrast(CONTRAST);
 
-    while(1)
+    while(TRUE)
     {
         //starts a capture
 		dcmi_capture_start();
@@ -149,7 +149,7 @@ static THD_FUNCTION(ProcessImage, arg)
 
 	uint16_t rgb[NB_COLOR]={0,0,0}, mean = 0, distance =0;
 
-    while(1)
+    while(TRUE)
     {
     	//waits until an image has been captured
         chBSemWait(&image_ready_sem);
@@ -158,13 +158,6 @@ static THD_FUNCTION(ProcessImage, arg)
 
 		//get the distance to object
 		 distance = VL53L0X_get_dist_mm();
-
-		 //turn off the lights only if not at turning distance
-		 if(distance > GOAL_DISTANCE)
-		 {
-			 clear_leds();
-			 set_body_led(FALSE);
-		 }
 
 		//color_ready is the signal that the color was analyzed (=1) or not (=0)
 		 color_ready = FALSE;
@@ -187,6 +180,14 @@ static THD_FUNCTION(ProcessImage, arg)
 			analyze_color(rgb, mean);
 
 			color_ready = TRUE;
+	        chThdSleepMilliseconds(SEC/4);
+		 }
+		 else
+		 {
+			 //turn off the lights only if not at turning distance
+			 clear_leds();
+			 set_body_led(FALSE);
+		     chThdSleepMilliseconds(SEC/2);
 		 }
     }
 }

@@ -11,6 +11,8 @@ extern "C" {
 
 
 //constants for the differents parts of the project
+//main
+#define SEC						1000 //in [ms]
 
 //process image
 #define IMAGE_BUFFER_SIZE		640

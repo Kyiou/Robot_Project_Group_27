@@ -62,12 +62,6 @@ int16_t pi_regulator(float distance, float goal)
         speed = -MOTOR_MAX;
     }
 
-    //prevents the robot from going back when too far from the object
-	if(distance > GOAL_DISTANCE)
-	{
-		speed = fabs(speed);
-	}
-
     return (int16_t)speed;
 }
 
@@ -161,7 +155,7 @@ static THD_FUNCTION(PiRegulator, arg) {
 
     int16_t distance;
 
-    while(1)
+    while(TRUE)
     {
         time = chVTGetSystemTime();
 
@@ -171,7 +165,8 @@ static THD_FUNCTION(PiRegulator, arg) {
         rotation_done = TRUE;
 
         //stops the motor when around analyzing distance
-        if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD && distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
+        if(distance <= GOAL_DISTANCE + ERROR_THRESHOLD &&
+           distance >= GOAL_DISTANCE - ERROR_THRESHOLD)
         {
         	right_motor_set_speed(0);
         	left_motor_set_speed(0);
