@@ -20,8 +20,6 @@ uint8_t start_stop(void)
 	volume = (mic_get_volume(MIC_FRONT)+mic_get_volume(MIC_RIGHT)+
 			  mic_get_volume(MIC_BACK)+mic_get_volume(MIC_LEFT))/4;
 
-	//chprintf((BaseSequentialStream *)&SD3, "Volume = %d  \n", volume);
-
 	//check for starting signal, put thread to sleep so no double signal, led indication
 	if(volume > START_THRESHOLD && start)
 	{

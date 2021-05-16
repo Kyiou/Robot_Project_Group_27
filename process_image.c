@@ -185,9 +185,6 @@ static THD_FUNCTION(ProcessImage, arg)
 			rgb[GREEN] = normalize(rgb[GREEN], mean);
 			rgb[BLUE] = normalize(rgb[BLUE], mean);
 
-			/*chprintf((BaseSequentialStream *)&SD3, "Color : r = %d , g = %d , b = %d, mean = %d \n"
-												 , rgb[RED], rgb[GREEN], rgb[BLUE], mean);*/
-
 			analyze_color(rgb, mean);
 
 			color_ready = TRUE;
